@@ -403,3 +403,74 @@ export const removeCollaborator = async (req, res) => {
     });
   }
 };
+
+// GENERATE PUBLIC SHARE LINK
+export const generatePublicLink = async (req, res) => {
+  try {
+    const document = await Document.findOne({
+      _id: req.params.id,
+      owner: req.user.userId,
+      isDeleted: false,
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        message: 'Document not found',
+      });
+    }
+
+    // Make document public
+    document.visibility = 'public';
+
+    await document.save();
+
+    res.json({
+      message: 'Public link generated successfully',
+      shareLink: document.shareLink,
+      publicUrl: `${req.protocol}://${req.get('host')}/api/public/${document.shareLink}`,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};
+
+// GET DOCUMENT BY PUBLIC SHARE LINK
+export const getPublicDocument = async (req, res) => {
+  try {
+    const document = await Document.findOne({
+      shareLink: req.params.shareLink,
+      visibility: 'public',
+      isDeleted: false,
+    })
+      .populate('owner', 'name email')
+      .select('-collaborators');
+
+    if (!document) {
+      return res.status(404).json({
+        message: 'Public document not found',
+      });
+    }
+
+    // Count public views too
+    document.viewCount += 1;
+    await document.save();
+
+    res.json({
+      _id: document._id,
+      title: document.title,
+      content: document.content,
+      owner: document.owner,
+      visibility: document.visibility,
+      viewCount: document.viewCount,
+      updatedAt: document.updatedAt,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};

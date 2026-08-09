@@ -14,6 +14,7 @@ import {
   shareDocument,
   getCollaborators,
   removeCollaborator,
+  generatePublicLink,
 
  } from '../controllers/documentController.js';
 
@@ -41,6 +42,9 @@ router.patch('/:id/favorite', toggleFavorite);
 router.post('/:id/share', shareDocument);
 router.get('/:id/collaborators', getCollaborators);
 router.delete('/:id/collaborators/:userId', removeCollaborator);
+
+// PUBLIC LINK
+router.post('/:id/public-link', generatePublicLink);
 
 // DELETE (SOFT DELETE)
 router.delete('/:id', deleteDocument);
