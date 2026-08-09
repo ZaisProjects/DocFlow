@@ -71,8 +71,6 @@ export const getDocumentById = async (req, res) => {
         message: 'Document not found',
       });
     }
-    console.log('Document owner:', document.owner.toString());
-    console.log('Current user :', req.user.userId);
 
     // Access control
     if (!canAccess(document, req.user.userId)) {
