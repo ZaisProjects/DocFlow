@@ -15,6 +15,7 @@ import {
   getCollaborators,
   removeCollaborator,
   generatePublicLink,
+  generateDocumentSummary,
 
  } from '../controllers/documentController.js';
 
@@ -45,6 +46,9 @@ router.delete('/:id/collaborators/:userId', removeCollaborator);
 
 // PUBLIC LINK
 router.post('/:id/public-link', generatePublicLink);
+
+// AI SUMMARY
+router.post('/:id/summary', generateDocumentSummary);
 
 // DELETE (SOFT DELETE)
 router.delete('/:id', deleteDocument);

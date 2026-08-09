@@ -1,5 +1,6 @@
 import Document from '../models/Document.js';
 import User from '../models/User.js';
+import { generateSummary } from '../services/aiService.js';
 
 // Check whether current user can access a document
 const canAccess = (document, userId) => {
@@ -473,4 +474,71 @@ export const getPublicDocument = async (req, res) => {
       error: error.message,
     });
   }
+};
+
+// GENERATE AI SUMMARY
+export const generateDocumentSummary = async (req, res) => {
+  try {
+    const document = await Document.findById(req.params.id);
+
+    if (!document || document.isDeleted) {
+      return res.status(404).json({
+        message: 'Document not found',
+      });
+    }
+
+    // Owner or collaborator can generate summary
+    const isOwner =
+      document.owner.toString() === req.user.userId;
+
+    const isCollaborator = document.collaborators.some(
+      c => c.user.toString() === req.user.userId
+    );
+
+    if (!isOwner && !isCollaborator) {
+      return res.status(403).json({
+        message: 'Access denied',
+      });
+    }
+
+    // Content validation
+    if (!document.content || document.content.trim().length < 200) {
+      return res.status(400).json({
+        message: 'Document content is too short for summarization, MIN: 50 words needed',
+      });
+    }
+
+    // Generate AI summary
+    const result = await generateSummary(document.content);
+
+    // Save results
+    document.aiSummary = result.summary;
+    document.aiKeywords = result.keywords;
+
+    await document.save();
+
+    res.json({
+      message: 'AI summary generated successfully',
+      summary: document.aiSummary,
+      keywords: document.aiKeywords,
+      documentId: document._id,
+    });
+} catch (error) {
+  console.error('AI Summary Error:', error);
+
+  // quota exceeded
+  if (
+    error.message &&
+    error.message.includes('RESOURCE_EXHAUSTED')
+  ) {
+    return res.status(429).json({
+      message:
+        'AI quota exceeded. Please try again later.',
+    });
+  }
+
+  res.status(500).json({
+    message: 'Failed to generate AI summary',
+  });
+}
 };
