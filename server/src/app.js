@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
 import publicRoutes from './routes/publicRoutes.js';
+import searchRoutes from './routes/searchRoutes.js';
 
 const app = express();
 
@@ -21,5 +22,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/search', searchRoutes);
 
 export default app;

@@ -105,10 +105,34 @@ const documentSchema = new mongoose.Schema(
   }
 );
 
-// Full-text search index
+// --------------------------------------------------
+// SEARCH INDEXES
+// --------------------------------------------------
+
+// Full-text search on title + content
 documentSchema.index({
   title: 'text',
   content: 'text',
 });
+
+// Fast dashboard query:
+// owner + not deleted + recently updated
+documentSchema.index({
+  owner: 1,
+  isDeleted: 1,
+  updatedAt: -1,
+});
+
+// Fast public/shared listing
+documentSchema.index({
+  visibility: 1,
+  updatedAt: -1,
+});
+
+// Fast AI keyword search
+documentSchema.index({
+  aiKeywords: 1,
+});
+
 
 export default mongoose.model('Document', documentSchema);
