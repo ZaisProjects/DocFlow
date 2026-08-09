@@ -11,6 +11,9 @@ import {
   deleteDocument,
   getTrashDocuments,
   restoreDocument,
+  shareDocument,
+  getCollaborators,
+  removeCollaborator,
 
  } from '../controllers/documentController.js';
 
@@ -31,11 +34,18 @@ router.get('/trash', getTrashDocuments);
 // RESTORE
 router.patch('/:id/restore', restoreDocument);
 
+// TOGGLE FAVORITE
+router.patch('/:id/favorite', toggleFavorite);
+
+// Share Routes
+router.post('/:id/share', shareDocument);
+router.get('/:id/collaborators', getCollaborators);
+router.delete('/:id/collaborators/:userId', removeCollaborator);
+
 // DELETE (SOFT DELETE)
 router.delete('/:id', deleteDocument);
 
-// TOGGLE FAVORITE
-router.patch('/:id/favorite', toggleFavorite);
+
 
 // GET DOCUMENTS BY ID
 router.get('/:id', getDocumentById);

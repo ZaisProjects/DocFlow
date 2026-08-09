@@ -1,4 +1,5 @@
 import Document from '../models/Document.js';
+import User from '../models/User.js';
 
 // Check whether current user can access a document
 const canAccess = (document, userId) => {
@@ -252,6 +253,148 @@ export const restoreDocument = async (req, res) => {
     res.json({
       message: 'Document restored successfully',
       documentId: document._id,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};
+
+// SHARE DOCUMENT
+export const shareDocument = async (req, res) => {
+  try {
+    const { email, role = 'editor' } = req.body;
+
+    // Find the user to share with
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found',
+      });
+    }
+
+    // Find document owned by current user
+    const document = await Document.findOne({
+      _id: req.params.id,
+      owner: req.user.userId,
+      isDeleted: false,
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        message: 'Document not found',
+      });
+    }
+
+    // Prevent sharing with yourself
+    if (user._id.toString() === req.user.userId) {
+      return res.status(400).json({
+        message: 'You already own this document',
+      });
+    }
+
+    // Prevent duplicate collaborators
+    const alreadyCollaborator = document.collaborators.some(
+      c => c.user.toString() === user._id.toString()
+    );
+
+    if (alreadyCollaborator) {
+      return res.status(400).json({
+        message: 'User is already a collaborator',
+      });
+    }
+
+    // Add collaborator
+    document.collaborators.push({
+      user: user._id,
+      role,
+    });
+
+    await document.save();
+
+    res.status(201).json({
+      message: 'Document shared successfully',
+      collaborator: {
+        userId: user._id,
+        name: user.name,
+        email: user.email,
+        role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};
+
+// GET COLLABORATORS
+export const getCollaborators = async (req, res) => {
+  try {
+    const document = await Document.findOne({
+      _id: req.params.id,
+      owner: req.user.userId,
+    }).populate('collaborators.user', 'name email');
+
+    if (!document) {
+      return res.status(404).json({
+        message: 'Document not found',
+      });
+    }
+
+    res.json(document.collaborators);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};
+
+// REMOVE COLLABORATOR
+export const removeCollaborator = async (req, res) => {
+  try {
+    const document = await Document.findOne({
+      _id: req.params.id,
+      owner: req.user.userId,
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        message: 'Document not found',
+      });
+    }
+
+    // Find collaborator index
+    const collaboratorIndex = document.collaborators.findIndex(
+      c => c.user.toString() === req.params.userId
+    );
+
+    if (collaboratorIndex === -1) {
+      return res.status(404).json({
+        message: 'Collaborator not found',
+      });
+    }
+
+    // Save collaborator BEFORE removing
+    const removedCollaborator =
+      document.collaborators[collaboratorIndex];
+
+    // Remove collaborator
+    document.collaborators.splice(collaboratorIndex, 1);
+
+    await document.save();
+
+    res.json({
+      message: 'Collaborator removed successfully',
+      removedCollaborator: {
+        userId: removedCollaborator.user,
+        role: removedCollaborator.role,
+      },
     });
   } catch (error) {
     res.status(500).json({
