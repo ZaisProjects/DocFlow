@@ -88,7 +88,11 @@ export const getDocumentById = async (req, res) => {
     document.viewCount += 1;
     await document.save();
 
-    res.json(document);
+    // Send created document back to client
+    res.status(201).json({
+      message: 'Document created',
+      document,
+    });
   } catch (error) {
     res.status(500).json({
       message: 'Server error',

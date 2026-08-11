@@ -61,6 +61,7 @@ router.get('/:id', getDocumentById);
 // UPDATE DOCUMENT
 router.patch('/:id', updateDocument);
 
+router.put('/:id', updateDocument);
 
 
 export default router;

@@ -18,3 +18,8 @@ export async function getDocumentById(id) {
   const response = await api.get(`/documents/${id}`);
   return response.data.document;
 }
+
+export async function updateDocument(id, data) {
+  const response = await api.put(`/documents/${id}`, data);
+  return response.data;
+}
