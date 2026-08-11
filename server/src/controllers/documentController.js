@@ -30,7 +30,10 @@ export const createDocument = async (req, res) => {
     });
 
     // Send created document back to client
-    res.status(201).json(document);
+    res.status(201).json({
+      message: 'Document created',
+      document,
+    });
   } 
   catch (error) {
     res.status(500).json({
