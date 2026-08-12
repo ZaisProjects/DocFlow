@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/authService';
+import { useToast } from '../contexts/ToastContext';
 import '../styles/auth.css';
 
 export default function Register() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [form, setForm] = useState({
     name: '',
@@ -74,6 +76,7 @@ export default function Register() {
         });
 
         navigate('/login');
+        showToast("User Registered Successful", "success");
     } catch (err) {
         setError(
         err.response?.data?.message || 'Registration failed'

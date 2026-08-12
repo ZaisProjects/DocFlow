@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaEdit } from "react-icons/fa";
 
+import { useToast } from '../contexts/ToastContext';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 import '../styles/editor.css';
+
 import socket from '../services/socket';
 import {
   getDocumentById,
@@ -16,6 +19,8 @@ import {
 export default function Editor() {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  const { showToast } = useToast();
 
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +40,14 @@ export default function Editor() {
   const [publicLink, setPublicLink] = useState('');
 
   const typingTimeoutRef = useRef(null);
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+
+  function askRemove(userId) {
+    setSelectedUserId(userId);
+    setDialogOpen(true);
+  }
 
   // Current logged-in user
   const user = JSON.parse(localStorage.getItem('user'));
@@ -166,7 +179,8 @@ export default function Editor() {
       shareRole
     );
 
-    setShareMessage(result.message);
+    // setShareMessage(result.message);
+    showToast(result.message, "success");
     setShareEmail('');
 
     const updated = await getCollaborators(id);
@@ -203,11 +217,9 @@ async function handleRemove(userId) {
     setCollaborators(prev =>
       prev.filter(c => c.user._id !== userId)
     );
-
-    alert('Collaborator removed');
-  } catch (error) {
+  } 
+  catch (error) {
     console.error(error);
-    alert('Failed to remove collaborator');
   }
 }
 
@@ -233,7 +245,7 @@ async function handleRemove(userId) {
 
     useEffect(() => {
     function handleEditDenied(data) {
-      alert(data.message);
+      showToast(data.message, 'error');
     }
 
     socket.on('edit-denied', handleEditDenied);
@@ -254,8 +266,9 @@ async function handleRemove(userId) {
               : c
           )
         );
+        showToast('Role Update Successful', 'success');
       } catch (error) {
-        alert('Failed to update role');
+      showToast('Failed to Update Role', 'error');
       }
     }
 
@@ -320,56 +333,56 @@ async function handleRemove(userId) {
             })
           }
         />
-  <FaEdit
-    size={20}
-    onClick={() => setIsReadOnly(false)}
-    style={{ cursor: "pointer" }}
-  />
-<div className="public-link-card">
-  <div className="public-link-header">
-    <div>
-      <h3>Public sharing</h3>
-      <p>Create a read-only link that anyone can open.</p>
-    </div>
+        <FaEdit
+          size={20}
+          onClick={() => setIsReadOnly(false)}
+          style={{ cursor: "pointer" }}
+        />
+        <div className="public-link-card">
+          <div className="public-link-header">
+            <div>
+              <h3>Public sharing</h3>
+              <p>Create a read-only link that anyone can open.</p>
+            </div>
 
-    <button
-      className="primary-btn"
-      onClick={handleGeneratePublicLink}
-    >
-      Generate Link
-    </button>
-  </div>
+            <button
+              className="primary-btn"
+              onClick={handleGeneratePublicLink}
+            >
+              Generate Link
+            </button>
+          </div>
 
-  {publicLink && (
-    <div className="public-link-row">
-      <input
-        className="public-link-input"
-        readOnly
-        value={`${window.location.origin}/public/${publicLink}`}
-      />
+          {publicLink && (
+            <div className="public-link-row">
+              <input
+                className="public-link-input"
+                readOnly
+                value={`${window.location.origin}/public/${publicLink}`}
+              />
 
-      <button
-        className="copy-btn"
-        onClick={() =>
-          navigator.clipboard.writeText(
-            `${window.location.origin}/public/${publicLink}`
-          )
-        }
-      >
-        Copy
-      </button>
+              <button
+                className="copy-btn"
+                onClick={() =>
+                  navigator.clipboard.writeText(
+                    `${window.location.origin}/public/${publicLink}`
+                  )
+                }
+              >
+                Copy
+              </button>
 
-      <a
-        className="open-link-btn"
-        href={`/public/${publicLink}`}
-        target="_blank"
-        rel="noreferrer"
-      >
-        Open
-      </a>
-    </div>
-  )}
-</div>
+              <a
+                className="open-link-btn"
+                href={`/public/${publicLink}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open
+              </a>
+            </div>
+          )}
+        </div>
 
         <div className="editor-presence">
           <strong>Online: {onlineUsers.length}</strong>
@@ -383,79 +396,76 @@ async function handleRemove(userId) {
           </div>
         </div>
 
-{document.owner?._id === user.id && (
-  <section className="share-panel">
-    <h3>Share document</h3>
+        {document.owner?._id === user.id && (
+          <section className="share-panel">
+            <h3>Share document</h3>
 
-    <form onSubmit={handleShare} className="share-form">
-      <input
-        type="email"
-        placeholder="Enter user email"
-        value={shareEmail}
-        onChange={e => setShareEmail(e.target.value)}
-        required
-      />
+              <form onSubmit={handleShare} className="share-form">
+                <input
+                  type="email"
+                  placeholder="Enter user email"
+                  value={shareEmail}
+                  onChange={e => setShareEmail(e.target.value)}
+                  required
+                />
 
-      <select
-        value={shareRole}
-        onChange={e => setShareRole(e.target.value)}
-      >
-        <option value="editor">Editor</option>
-        <option value="viewer">Viewer</option>
-      </select>
+                <select
+                  value={shareRole}
+                  onChange={e => setShareRole(e.target.value)}
+                >
+                  <option value="editor">Editor</option>
+                  <option value="viewer">Viewer</option>
+                </select>
 
-      <button type="submit">Share</button>
-    </form>
+                <button type="submit">Share</button>
+              </form>
 
-        {shareMessage && (
-          <p className="share-message">{shareMessage}</p>
+                {shareMessage && (
+                  <p className="share-message">{shareMessage}</p>
+                )}
+
+                <div className="collaborator-list">
+                  <h3>Collaborators</h3>
+
+                  <div className="collaborators-list">
+                    {collaborators.length === 0 ? (
+                      <p>No collaborators yet</p>
+                    ) : (
+                      collaborators.map(c => (
+                        <div key={c.user._id} className="collaborator-item">
+                          <div className="collaborator-info">
+                            <strong>{c.user.name}</strong>
+                            <p>{c.user.email}</p>
+                          </div>
+
+                          <div className="collaborator-actions">
+                            <select
+                              value={c.role}
+                              onChange={e =>
+                                handleRoleChange(c.user._id, e.target.value)
+                              }
+                            >
+                              <option value="viewer">Viewer</option>
+                              <option value="editor">Editor</option>
+                            </select>
+
+                            <button onClick={() => askRemove(c.user._id)}>
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </section>
+            )}
+
+        {isReadOnly && (
+          <div className="readonly-banner">
+            You have <strong>view-only access</strong> to this document.
+          </div>
         )}
-
-        <div className="collaborator-list">
-<h3>Collaborators</h3>
-
-<div className="collaborators-list">
-  {collaborators.length === 0 ? (
-    <p>No collaborators yet</p>
-  ) : (
-    collaborators.map(c => (
-      <div key={c.user._id} className="collaborator-item">
-        <div className="collaborator-info">
-          <strong>{c.user.name}</strong>
-          <p>{c.user.email}</p>
-        </div>
-
-        <div className="collaborator-actions">
-          <select
-            value={c.role}
-            onChange={e =>
-              handleRoleChange(c.user._id, e.target.value)
-            }
-          >
-            <option value="viewer">Viewer</option>
-            <option value="editor">Editor</option>
-          </select>
-
-          <button
-            className="remove-btn"
-            onClick={() => handleRemove(c.user._id)}
-          >
-            Remove
-          </button>
-        </div>
-      </div>
-    ))
-  )}
-</div>
-        </div>
-      </section>
-    )}
-
-{isReadOnly && (
-  <div className="readonly-banner">
-    You have <strong>view-only access</strong> to this document.
-  </div>
-)}
 
         <textarea
           className="editor-textarea"
@@ -510,6 +520,26 @@ async function handleRemove(userId) {
           </span>
         </div>
       </main>
+
+      <ConfirmDialog
+        open={dialogOpen}
+        title="Remove collaborator"
+        message="This user will lose access to the document immediately."
+        confirmText="Remove"
+        cancelText="Cancel"
+        danger
+        onCancel={() => setDialogOpen(false)}
+        onConfirm={async () => {
+          try {
+            await handleRemove(selectedUserId);
+            showToast('Collaborator removed', 'success');
+          } catch (error) {
+            showToast('Failed to remove collaborator', 'error');
+          } finally {
+            setDialogOpen(false);
+          }
+        }}
+      />
     </div>
   );
 }
