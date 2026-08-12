@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { FaEdit } from "react-icons/fa";
 
 import '../styles/editor.css';
 import socket from '../services/socket';
@@ -30,6 +31,8 @@ export default function Editor() {
   const [shareMessage, setShareMessage] = useState('');
 
   const [isReadOnly, setIsReadOnly] = useState(false);
+
+  const [publicLink, setPublicLink] = useState('');
 
   const typingTimeoutRef = useRef(null);
 
@@ -175,14 +178,35 @@ export default function Editor() {
   }
 }
 
+async function handleGeneratePublicLink() {
+  const token = localStorage.getItem('token');
+
+  const res = await fetch(
+    `http://localhost:5000/api/documents/${id}/public-link`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await res.json();
+
+  setPublicLink(data.shareLink);
+}
 async function handleRemove(userId) {
   try {
     await removeCollaborator(id, userId);
 
+    // Update UI immediately
     setCollaborators(prev =>
       prev.filter(c => c.user._id !== userId)
     );
+
+    alert('Collaborator removed');
   } catch (error) {
+    console.error(error);
     alert('Failed to remove collaborator');
   }
 }
@@ -296,6 +320,56 @@ async function handleRemove(userId) {
             })
           }
         />
+  <FaEdit
+    size={20}
+    onClick={() => setIsReadOnly(false)}
+    style={{ cursor: "pointer" }}
+  />
+<div className="public-link-card">
+  <div className="public-link-header">
+    <div>
+      <h3>Public sharing</h3>
+      <p>Create a read-only link that anyone can open.</p>
+    </div>
+
+    <button
+      className="primary-btn"
+      onClick={handleGeneratePublicLink}
+    >
+      Generate Link
+    </button>
+  </div>
+
+  {publicLink && (
+    <div className="public-link-row">
+      <input
+        className="public-link-input"
+        readOnly
+        value={`${window.location.origin}/public/${publicLink}`}
+      />
+
+      <button
+        className="copy-btn"
+        onClick={() =>
+          navigator.clipboard.writeText(
+            `${window.location.origin}/public/${publicLink}`
+          )
+        }
+      >
+        Copy
+      </button>
+
+      <a
+        className="open-link-btn"
+        href={`/public/${publicLink}`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        Open
+      </a>
+    </div>
+  )}
+</div>
 
         <div className="editor-presence">
           <strong>Online: {onlineUsers.length}</strong>
@@ -364,7 +438,7 @@ async function handleRemove(userId) {
 
           <button
             className="remove-btn"
-            onClick={() => handleRemoveCollaborator(c.user._id)}
+            onClick={() => handleRemove(c.user._id)}
           >
             Remove
           </button>
