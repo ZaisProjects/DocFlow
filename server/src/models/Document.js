@@ -11,7 +11,7 @@ const collaboratorSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['viewer', 'commenter', 'editor', 'owner'],
+      enum: ['viewer', 'editor'],
       default: 'editor',
     },
     addedAt: {

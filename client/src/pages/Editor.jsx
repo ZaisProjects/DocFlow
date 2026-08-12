@@ -3,7 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import '../styles/editor.css';
 import socket from '../services/socket';
-import { getDocumentById } from '../services/documentService';
+import {
+  getDocumentById,
+  updateDocument,
+  shareDocument,
+  getCollaborators,
+  removeCollaborator,
+  updateCollaboratorRole,
+} from '../services/documentService';
 
 export default function Editor() {
   const { id } = useParams();
@@ -16,6 +23,13 @@ export default function Editor() {
   const [saveStatus, setSaveStatus] = useState('saved');
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
+
+  const [shareEmail, setShareEmail] = useState('');
+  const [shareRole, setShareRole] = useState('editor');
+  const [collaborators, setCollaborators] = useState([]);
+  const [shareMessage, setShareMessage] = useState('');
+
+  const [isReadOnly, setIsReadOnly] = useState(false);
 
   const typingTimeoutRef = useRef(null);
 
@@ -121,6 +135,106 @@ export default function Editor() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!document) return;
+
+    async function loadCollaborators() {
+      try {
+        const data = await getCollaborators(id);
+        setCollaborators(data);
+      } catch (error) {
+        console.error('Collaborator load error:', error);
+      }
+    }
+
+    loadCollaborators();
+  }, [document, id]);
+
+
+  async function handleShare(e) {
+  e.preventDefault();
+
+  try {
+    setShareMessage('');
+
+    const result = await shareDocument(
+      id,
+      shareEmail,
+      shareRole
+    );
+
+    setShareMessage(result.message);
+    setShareEmail('');
+
+    const updated = await getCollaborators(id);
+    setCollaborators(updated);
+  } catch (error) {
+    setShareMessage(
+      error.response?.data?.message || 'Share failed'
+    );
+  }
+}
+
+async function handleRemove(userId) {
+  try {
+    await removeCollaborator(id, userId);
+
+    setCollaborators(prev =>
+      prev.filter(c => c.user._id !== userId)
+    );
+  } catch (error) {
+    alert('Failed to remove collaborator');
+  }
+}
+
+  useEffect(() => {
+    if (!document) return;
+
+    const storedUser = JSON.parse(
+      localStorage.getItem('user')
+    );
+
+    const isOwner =
+      document.owner?._id === storedUser.id ;
+
+    const collaborator = document.collaborators?.find(
+      c => c.user._id === storedUser.id
+    );
+
+    const canEdit =
+      isOwner || collaborator?.role === 'editor';
+
+    setIsReadOnly(!canEdit);
+  }, [document]);
+
+    useEffect(() => {
+    function handleEditDenied(data) {
+      alert(data.message);
+    }
+
+    socket.on('edit-denied', handleEditDenied);
+
+    return () => {
+      socket.off('edit-denied', handleEditDenied);
+    };
+    }, []);
+
+    async function handleRoleChange(userId, role) {
+      try {
+        await updateCollaboratorRole(id, userId, role);
+
+        setCollaborators(prev =>
+          prev.map(c =>
+            c.user._id === userId
+              ? { ...c, role }
+              : c
+          )
+        );
+      } catch (error) {
+        alert('Failed to update role');
+      }
+    }
+
   // Loading state
   if (loading) {
     return (
@@ -174,13 +288,13 @@ export default function Editor() {
         <input
           className="editor-title"
           value={document.title}
+          readOnly={isReadOnly}
           onChange={e =>
-            setDocument(prev => ({
-              ...prev,
+            setDocument({
+              ...document,
               title: e.target.value,
-            }))
+            })
           }
-          placeholder="Untitled document"
         />
 
         <div className="editor-presence">
@@ -195,10 +309,86 @@ export default function Editor() {
           </div>
         </div>
 
+{document.owner?._id === user.id && (
+  <section className="share-panel">
+    <h3>Share document</h3>
+
+    <form onSubmit={handleShare} className="share-form">
+      <input
+        type="email"
+        placeholder="Enter user email"
+        value={shareEmail}
+        onChange={e => setShareEmail(e.target.value)}
+        required
+      />
+
+      <select
+        value={shareRole}
+        onChange={e => setShareRole(e.target.value)}
+      >
+        <option value="editor">Editor</option>
+        <option value="viewer">Viewer</option>
+      </select>
+
+      <button type="submit">Share</button>
+    </form>
+
+        {shareMessage && (
+          <p className="share-message">{shareMessage}</p>
+        )}
+
+        <div className="collaborator-list">
+<h3>Collaborators</h3>
+
+<div className="collaborators-list">
+  {collaborators.length === 0 ? (
+    <p>No collaborators yet</p>
+  ) : (
+    collaborators.map(c => (
+      <div key={c.user._id} className="collaborator-item">
+        <div className="collaborator-info">
+          <strong>{c.user.name}</strong>
+          <p>{c.user.email}</p>
+        </div>
+
+        <div className="collaborator-actions">
+          <select
+            value={c.role}
+            onChange={e =>
+              handleRoleChange(c.user._id, e.target.value)
+            }
+          >
+            <option value="viewer">Viewer</option>
+            <option value="editor">Editor</option>
+          </select>
+
+          <button
+            className="remove-btn"
+            onClick={() => handleRemoveCollaborator(c.user._id)}
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+    ))
+  )}
+</div>
+        </div>
+      </section>
+    )}
+
+{isReadOnly && (
+  <div className="readonly-banner">
+    You have <strong>view-only access</strong> to this document.
+  </div>
+)}
+
         <textarea
           className="editor-textarea"
           value={document.content}
+          readOnly={isReadOnly}
           onChange={e => {
+            if (isReadOnly) return;
             const value = e.target.value;
 
             // Update local UI immediately

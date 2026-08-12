@@ -4,15 +4,20 @@ import { generateSummary } from '../services/aiService.js';
 
 // Check whether current user can access a document
 const canAccess = (document, userId) => {
-  // Owner can always access
+  // Owner
   if (document.owner._id.toString() === userId) {
     return true;
   }
 
-  // Collaborators can access
-  return document.collaborators.some(
-    collaborator => collaborator.user.toString() === userId
-  );
+  // Collaborators
+  return document.collaborators.some(collaborator => {
+    const collaboratorId =
+      collaborator.user._id
+        ? collaborator.user._id.toString()
+        : collaborator.user.toString();
+
+    return collaboratorId === userId;
+  });
 };
 
 // CREATE DOCUMENT
@@ -44,23 +49,27 @@ export const createDocument = async (req, res) => {
 };
 
 // GET MY DOCUMENTS 
-export const getDocuments = async (req, res) => { 
-    try {
+export const getDocuments = async (req, res) => {
+  try {
+    const userId = req.user.userId;
 
-    // Find documents owned by current user 
-    const documents = await Document.find({ 
-        owner: req.user.userId, 
-        isDeleted: false, 
-    }).sort({ updatedAt: -1 }); 
-    
-        res.json({documents}); 
-    } 
-    catch (error) { 
-        res.status(500).json({ 
-            message: 'Server error', 
-            error: error.message, 
-        }); 
-    } 
+    const documents = await Document.find({
+      isDeleted: false,
+      $or: [
+        { owner: userId },
+        { 'collaborators.user': userId },
+      ],
+    })
+      .populate('owner', 'name email')
+      .sort({ updatedAt: -1 });
+
+    res.json({ documents });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Server error',
+      error: error.message,
+    });
+  }
 };
 
 // GET SINGLE DOCUMENT
@@ -402,6 +411,57 @@ export const removeCollaborator = async (req, res) => {
       removedCollaborator: {
         userId: removedCollaborator.user,
         role: removedCollaborator.role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};
+
+// UPDATE COLLABORATOR ROLE
+export const updateCollaboratorRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+
+    if (!['viewer', 'editor'].includes(role)) {
+      return res.status(400).json({
+        message: 'Invalid role',
+      });
+    }
+
+    const document = await Document.findOne({
+      _id: req.params.id,
+      owner: req.user.userId,
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        message: 'Document not found',
+      });
+    }
+
+    const collaborator = document.collaborators.find(
+      c => c.user.toString() === req.params.userId
+    );
+
+    if (!collaborator) {
+      return res.status(404).json({
+        message: 'Collaborator not found',
+      });
+    }
+
+    collaborator.role = role;
+
+    await document.save();
+
+    res.json({
+      message: 'Role updated successfully',
+      collaborator: {
+        userId: collaborator.user,
+        role: collaborator.role,
       },
     });
   } catch (error) {

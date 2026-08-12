@@ -65,23 +65,61 @@ io.on('connection', socket => {
   });
 
   // Realtime document changes
-  socket.on('document-change', async ({ documentId, content, userId }) => {
-    try {
-      // Broadcast to other users only
-      socket.to(documentId).emit('receive-document-change', {
-        content,
-      });
+socket.on('document-change', async data => {
+  try {
+    const { documentId, content, userId } = data;
 
-      // Save to MongoDB
-      await Document.findByIdAndUpdate(documentId, {
-        content,
-        lastEditedBy: userId,
-        lastEditedAt: new Date(),
-      });
-    } catch (error) {
-      console.error('Realtime save error:', error.message);
+    // Load document
+    const document = await Document.findById(documentId);
+
+    if (!document || document.isDeleted) {
+      return;
     }
-  });
+
+    // Owner can edit
+    let canEdit =
+      document.owner.toString() === userId;
+
+    // Collaborator with editor role can edit
+    if (!canEdit) {
+      const collaborator = document.collaborators.find(
+        c => c.user.toString() === userId
+      );
+
+      canEdit =
+        collaborator && collaborator.role === 'editor';
+    }
+
+    // Block viewers
+    if (!canEdit) {
+      socket.emit('edit-denied', {
+        message: 'You have view-only access',
+      });
+      return;
+    }
+
+    // Broadcast to others
+    socket.to(documentId).emit('receive-document-change', {
+      content,
+    });
+
+    // Save to MongoDB
+    document.content = content;
+    document.lastEditedBy = userId;
+    document.lastEditedAt = new Date();
+
+    await document.save();
+
+    console.log(
+      `Document ${documentId} saved by ${userId}`
+    );
+  } catch (error) {
+    console.error(
+      'Realtime save error:',
+      error.message
+    );
+  }
+});
 
 socket.on('typing-start', ({ documentId, name }) => {
   socket.to(documentId).emit('user-typing', {

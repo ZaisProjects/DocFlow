@@ -14,6 +14,7 @@ import {
   shareDocument,
   getCollaborators,
   removeCollaborator,
+  updateCollaboratorRole,
   generatePublicLink,
   generateDocumentSummary,
 
@@ -43,6 +44,8 @@ router.patch('/:id/favorite', toggleFavorite);
 router.post('/:id/share', shareDocument);
 router.get('/:id/collaborators', getCollaborators);
 router.delete('/:id/collaborators/:userId', removeCollaborator);
+// UPDATE COLLABORATOR ROLE
+router.patch('/:id/collaborators/:userId', updateCollaboratorRole);
 
 // PUBLIC LINK
 router.post('/:id/public-link', generatePublicLink);

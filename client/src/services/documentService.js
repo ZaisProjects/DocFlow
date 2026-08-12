@@ -23,3 +23,39 @@ export async function updateDocument(id, data) {
   const response = await api.put(`/documents/${id}`, data);
   return response.data;
 }
+
+// Sharing of Docs.
+export async function shareDocument(documentId, email, role = 'editor') {
+  const response = await api.post(
+    `/documents/${documentId}/share`,
+    { email, role }
+  );
+  return response.data;
+}
+
+export async function getCollaborators(documentId) {
+  const response = await api.get(
+    `/documents/${documentId}/collaborators`
+  );
+  return response.data;
+}
+
+export async function removeCollaborator(documentId, userId) {
+  const response = await api.delete(
+    `/documents/${documentId}/collaborators/${userId}`
+  );
+  return response.data;
+}
+
+export async function updateCollaboratorRole(
+  documentId,
+  userId,
+  role
+) {
+  const response = await api.patch(
+    `/documents/${documentId}/collaborators/${userId}`,
+    { role }
+  );
+
+  return response.data;
+}
