@@ -59,3 +59,25 @@ export async function updateCollaboratorRole(
 
   return response.data;
 }
+
+export async function generateDocumentSummary(documentId) {
+  const token = localStorage.getItem('token');
+
+  const response = await fetch(
+    `http://localhost:5000/api/documents/${documentId}/summary`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Failed to generate summary');
+  }
+
+  return data;
+}

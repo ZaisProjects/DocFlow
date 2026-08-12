@@ -14,6 +14,7 @@ import {
   getCollaborators,
   removeCollaborator,
   updateCollaboratorRole,
+  generateDocumentSummary,
 } from '../services/documentService';
 
 export default function Editor() {
@@ -43,6 +44,10 @@ export default function Editor() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
+
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summary, setSummary] = useState('');
+  const [keywords, setKeywords] = useState([]);
 
   function askRemove(userId) {
     setSelectedUserId(userId);
@@ -272,6 +277,23 @@ async function handleRemove(userId) {
       }
     }
 
+  async function handleGenerateSummary() {
+    try {
+      setSummaryLoading(true);
+
+      const data = await generateDocumentSummary(id);
+
+      setSummary(data.summary);
+      setKeywords(data.keywords || []);
+
+      showToast('AI summary generated', 'success');
+    } catch (error) {
+      showToast(error.message, 'error');
+    } finally {
+      setSummaryLoading(false);
+    }
+  }
+
   // Loading state
   if (loading) {
     return (
@@ -466,6 +488,29 @@ async function handleRemove(userId) {
             You have <strong>view-only access</strong> to this document.
           </div>
         )}
+
+        <div className="ai-summary-card">
+          <div className="ai-summary-header">
+            <div>
+              <h3>AI Summary</h3>
+              <p>Generate a concise summary and keywords for this document.</p>
+            </div>
+
+            <button
+              className="primary-btn"
+              onClick={handleGenerateSummary}
+              disabled={summaryLoading}
+            >
+              {summaryLoading ? 'Generating...' : 'Generate Summary'}
+            </button>
+          </div>
+
+          {summary && (
+            <div className="summary-content">
+              <p>{summary}</p>
+            </div>
+          )}
+        </div>
 
         <textarea
           className="editor-textarea"
