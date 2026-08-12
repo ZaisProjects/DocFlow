@@ -164,7 +164,7 @@ export default function Editor() {
         const data = await getCollaborators(id);
         setCollaborators(data);
       } catch (error) {
-        console.error('Collaborator load error:', error);
+        showToast(error.message, 'error');
       }
     }
 
@@ -273,7 +273,7 @@ async function handleRemove(userId) {
         );
         showToast('Role Update Successful', 'success');
       } catch (error) {
-      showToast('Failed to Update Role', 'error');
+          showToast(error.message, 'error');
       }
     }
 
