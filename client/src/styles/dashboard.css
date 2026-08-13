@@ -366,3 +366,27 @@
 .trash-actions .delete-btn:hover {
   background: #fecaca;
 }
+
+.favorite-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: #cbd5e1;
+  transition: transform 0.15s ease, color 0.2s ease;
+  padding: 0;
+}
+
+.favorite-btn:hover {
+  transform: scale(1.15);
+}
+
+.favorite-btn.active {
+  color: #f59e0b;
+}
+
+.document-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

@@ -100,6 +100,28 @@ export async function searchDocuments(query) {
 
   return response.json();
 }
+// Toggle Favorite
+export async function toggleFavorite(id) {
+  const token = localStorage.getItem('token');
+
+  const response = await fetch(
+    `http://localhost:5000/api/documents/${id}/favorite`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Failed to update favorite');
+  }
+
+  return data;
+}
 
 // Get trashed documents
 export async function getTrashDocuments() {

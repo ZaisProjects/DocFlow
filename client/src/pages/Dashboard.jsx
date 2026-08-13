@@ -10,6 +10,7 @@ import {
   getDocuments,
   createDocument,
   searchDocuments,
+  toggleFavorite,
   getTrashDocuments,
   restoreDocument,
   deleteDocument,
@@ -20,7 +21,9 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  
   const { user, logout } = useAuth();
+  const { showToast, confirm } = useToast();
 
 
   //----------------- STATE----------------------
@@ -57,8 +60,6 @@ export default function Dashboard() {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
-    const { confirm, showToast } = useToast();
-
   // LOAD DOCUMENTS ON PAGE OPEN
 
   useEffect(() => {
@@ -94,6 +95,7 @@ export default function Dashboard() {
       });
 
       console.log('Created document:', newDoc);
+      showToast("Document Created Sucessfully ", "success");
 
       // Open editor immediately
       navigate(`/editor/${newDoc._id}`);
@@ -132,6 +134,35 @@ export default function Dashboard() {
     // Cleanup debounce timer
     return () => clearTimeout(timer);
   }, [searchQuery, allDocuments]);
+
+  async function handleToggleFavorite(id) {
+  try {
+    const result = await toggleFavorite(id);
+
+    // Update documents list instantly
+    setDocuments(prev =>
+      prev.map(doc =>
+        doc._id === id
+          ? { ...doc, isFavorite: result.isFavorite }
+          : doc
+      )
+    );
+
+    // Update original list too
+    setAllDocuments(prev =>
+      prev.map(doc =>
+        doc._id === id
+          ? { ...doc, isFavorite: result.isFavorite }
+          : doc
+      )
+    );
+
+    showToast(result.message, 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to update favorite', 'error');
+  }
+}
 
 async function handleDeleteDocument(id) {
   const ok = await confirm({
@@ -291,6 +322,8 @@ async function handlePermanentDelete(id) {
   const visibleDocuments =
     activeTab === 'trash'
       ? trashDocuments
+      : activeTab === 'favorites'
+      ? documents.filter(doc => doc.isFavorite)
       : documents;
 
   // MAIN UI
@@ -345,6 +378,13 @@ async function handlePermanentDelete(id) {
         </button>
 
         <button
+          className={activeTab === 'favorites' ? 'tab active' : 'tab'}
+          onClick={() => setActiveTab('favorites')}
+        >
+          Favorites ({allDocuments.filter(d => d.isFavorite).length})
+        </button>
+
+        <button
           className={activeTab === 'trash' ? 'tab active' : 'tab'}
           onClick={() => setActiveTab('trash')}
         >
@@ -359,9 +399,15 @@ async function handlePermanentDelete(id) {
 {visibleDocuments.length === 0 ? (
   <div className='empty-state'>
     <h2>
-      {activeTab === 'trash'
-        ? 'Trash is empty'
-        : 'No documents found'}
+      <p>
+        {activeTab === 'favorites'
+          ? 'No favorite documents yet.'
+          : activeTab === 'trash'
+          ? 'Trash is empty.'
+          : searchQuery
+          ? 'No document matches your search.'
+          : 'Create your first collaborative document to get started.'}
+      </p>
     </h2>
 
     <p>
@@ -395,9 +441,20 @@ async function handlePermanentDelete(id) {
             {doc.visibility}
           </span>
 
-          {doc.isFavorite && (
-            <span className='favorite-badge'>★</span>
-          )}
+          <button
+            className={`favorite-btn ${doc.isFavorite ? 'active' : ''}`}
+            onClick={e => {
+              e.stopPropagation();
+              handleToggleFavorite(doc._id);
+            }}
+            title={
+              doc.isFavorite
+                ? 'Remove from favorites'
+                : 'Add to favorites'
+            }
+          >
+            ★
+          </button>
         </div>
 
         {/* Title */}

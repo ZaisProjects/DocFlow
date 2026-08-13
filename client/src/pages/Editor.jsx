@@ -21,7 +21,7 @@ export default function Editor() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { showToast } = useToast();
+  const { showToast, confirm } = useToast();
 
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(true);
