@@ -384,12 +384,18 @@ async function handlePermanentDelete(id) {
   </div>
 
   <div className="nav-actions">
+    <div>
+      <Link to="/profile" 
+        className="create-btn"> 
+          Profile 
+      </Link>     
+    </div>
     <button
       className="create-btn"
       onClick={handleCreateDocument}
       disabled={creating}
     >
-      {creating ? 'Creating...' : '+ New Doc'}
+      {creating ? 'Creating...' : '+New'}
     </button>
 
     <button className="logout-btn" onClick={logout}>
@@ -531,9 +537,21 @@ async function handlePermanentDelete(id) {
           <span>Views {doc.viewCount || 0}</span>
         </div>
         <div className="document-footer">
-          <span>
-            Last edited by {doc.owner?.name || 'You'}
-          </span>
+          {getUserRole(doc) === 'owner' ? (
+            <div className="owner-row">
+              <span className="owner-label">Owner: </span>
+              <span className="owner-name">{doc.owner?.name || 'You'}</span>
+            </div>
+          ) : (
+            <div className="owner-row">
+              <span className="owner-label">Shared by: </span>
+              <span className="owner-name">{doc.owner?.name || 'Unknown'}</span>
+            </div>
+          )}
+
+          <div className="edited-row">
+            Last edited by: {doc.lastEditedBy?.name || doc.owner?.name || 'Unknown'}
+          </div>
         </div>
 
         {/* Action buttons */}

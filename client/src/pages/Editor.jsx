@@ -390,49 +390,40 @@ async function handleDownload(type) {
 
   return (
     <div className="editor-page">
+      <header className="editor-topbar">
+        <div className="topbar-left">
+          <button
+            className="back-btn"
+            onClick={() => navigate('/dashboard')}
+          >
+            ← Dashboard
+          </button>
 
+          <div className="save-status">
+            <span className="save-dot"></span>
 
+            <span>
+              {saveStatus === 'saving'
+                ? 'Saving changes...'
+                : 'Changes saved'}
+            </span>
+          </div>
+        </div>
 
+        <div className="topbar-right">
+          <div className="online-chip">
+            <span className="online-dot"></span>
+            {onlineUsers.length} online
+          </div>
 
-<header className="editor-topbar">
-  <div className="topbar-left">
-    <button
-      className="back-btn"
-      onClick={() => navigate('/dashboard')}
-    >
-      ← Dashboard
-    </button>
-
-    <div className="save-status">
-      <span className="save-dot"></span>
-
-      <span>
-        {saveStatus === 'saving'
-          ? 'Saving changes...'
-          : 'Changes saved'}
-      </span>
-    </div>
-  </div>
-
-  <div className="topbar-right">
-    <div className="online-chip">
-      <span className="online-dot"></span>
-      {onlineUsers.length} online
-    </div>
-
-    <button
-      className="panel-toggle-btn"
-      onClick={() => setSidebarOpen(prev => !prev)}
-    >
-      {sidebarOpen ? 'Hide panel' : 'Show panel'}
-    </button>
-  </div>
-</header>
-
-
-
-
-
+          <button
+            className="panel-toggle-btn"
+            onClick={() => setSidebarOpen(prev => !prev)}
+          >
+            {sidebarOpen ? 'Hide panel' : 'Show panel'}
+          </button>
+        </div>
+      </header>
 
 <main className={`editor-layout ${
     sidebarOpen ? 'with-sidebar' : 'without-sidebar'
@@ -509,40 +500,42 @@ async function handleDownload(type) {
           onBlur={handleTitleChange}
         />
       </div>
-          <div className="sidebar-card">
-      <label className='settings-label'><h3>Visibility</h3></label>
-      <select className="visibility-select"
-        value={document.visibility}
-        onChange={async e => {
-          const newVisibility = e.target.value;
+      {document.owner?._id === user.id && (
+      <div className="sidebar-card">
+        <label className='settings-label'><h3>Visibility</h3></label>
+        <select className="visibility-select"
+          value={document.visibility}
+          onChange={async e => {
+            const newVisibility = e.target.value;
 
-          setDocument(prev => ({
-            ...prev,
-            visibility: newVisibility,
-          }));
-
-          try {
-            await updateDocument(id, {
-              title: document.title,
-              content: document.content,
+            setDocument(prev => ({
+              ...prev,
               visibility: newVisibility,
-            });
+            }));
 
-            // Clear public link if document becomes private
-            if (newVisibility === 'private') {
-              setPublicLink('');
+            try {
+              await updateDocument(id, {
+                title: document.title,
+                content: document.content,
+                visibility: newVisibility,
+              });
+
+              // Clear public link if document becomes private
+              if (newVisibility === 'private') {
+                setPublicLink('');
+              }
+
+              showToast('Visibility updated', 'success');
+            } catch (error) {
+              showToast('Failed to update visibility', 'error');
             }
-
-            showToast('Visibility updated', 'success');
-          } catch (error) {
-            showToast('Failed to update visibility', 'error');
-          }
-        }}
-      >
-        <option value='private'>Private</option>
-        <option value='public'>Public</option>
-      </select>  
-      </div>  
+          }}
+        >
+          <option value='private'>Private</option>
+          <option value='public'>Public</option>
+        </select>  
+      </div>
+      )}
 
       {/* AI Summary */}
       <div className="sidebar-card">
@@ -633,6 +626,7 @@ async function handleDownload(type) {
       )}
 
       {/* Public sharing */}
+      {document.owner?._id === user.id && (
       <div className="sidebar-card">
         <div className="sidebar-card-header">
           <h3>Public sharing</h3>
@@ -643,6 +637,7 @@ async function handleDownload(type) {
             Generate
           </button>
         </div>
+
 
         {publicLink ? (
           <div className="public-link-column">
@@ -673,12 +668,13 @@ async function handleDownload(type) {
               </a>
             </div>
           </div>
-        ) : (
-          <p className="sidebar-muted">
-            Create a read-only link anyone can open.
-          </p>
+          ) : (
+            <p className="sidebar-muted">
+              Create a read-only link anyone can open.
+            </p>
         )}
       </div>
+      )}
 
       {/* Collaborators */}
       {document.owner?._id === user.id && (

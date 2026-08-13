@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
+import Profile from './pages/Profile';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Editor from './pages/Editor';
@@ -21,6 +22,16 @@ export default function App() {
       <Route path="/public/:shareLink" element={<PublicDocument />} />
       
       {/* Protected routes */}
+
+      <Route 
+        path="/profile" 
+        element={
+        <ProtectedRoute>
+          <Profile />
+        </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/dashboard"
         element={
