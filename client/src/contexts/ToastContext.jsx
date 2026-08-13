@@ -62,9 +62,28 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={{ showToast, confirm }}>
       {children}
-
       {toast && (
-        <Toast message={toast.message} type={toast.type} />
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            background:
+              toast.type === 'error'
+                ? '#dc2626'
+                : toast.type === 'warning'
+                ? '#d97706'
+                : '#16a34a',
+            color: 'white',
+            padding: '14px 18px',
+            borderRadius: '14px',
+            zIndex: 2147483647,
+            fontWeight: '600',
+            boxShadow: '0 16px 40px rgba(0,0,0,0.25)',
+          }}
+        >
+          {toast.message}
+        </div>
       )}
 
       <ConfirmDialog
