@@ -4,6 +4,7 @@ import { Search } from 'lucide-react';
 import { Link } from "react-router-dom";
 
 import '../styles/dashboard.css';
+import logo from "/logo.png";
 
 import { useToast } from '../contexts/ToastContext';
 
@@ -102,6 +103,7 @@ export default function Dashboard() {
       navigate(`/editor/${newDoc._id}`);
     } catch (err) {
       console.error(err);
+      showToast("Document Creation Failed ", "error");
       setError('Failed to create document');
     } finally {
       setCreating(false);
@@ -245,7 +247,7 @@ async function handleRestoreDocument(id) {
     const docs = await getDocuments();
     setDocuments(docs);
     setAllDocuments(docs);
-
+    showToast("Restore Successful", "success")
     showMessage({
       title: 'Restored',
       message: 'Document restored successfully.',
@@ -287,7 +289,7 @@ async function handlePermanentDelete(id) {
     setTrashDocuments(prev =>
       prev.filter(d => d._id !== id)
     );
-
+    showToast("Delete Permanently", "success")
     showMessage({
       title: 'Deleted',
       message: 'Document deleted permanently.',
@@ -295,7 +297,6 @@ async function handlePermanentDelete(id) {
     });
   } catch (err) {
     console.error(err);
-
     showMessage({
       title: 'Error',
       message: 'Failed to delete document permanently.',
@@ -327,14 +328,37 @@ async function handlePermanentDelete(id) {
       ? documents.filter(doc => doc.isFavorite)
       : documents;
 
+  function getUserRole(doc) {
+    const currentUserId = String(user?.id || user?._id || '');
+
+    // Owner
+    if (String(doc.owner?._id || doc.owner) === currentUserId) {
+      return 'owner';
+    }
+
+    // Collaborator role
+    const collaborator = doc.collaborators?.find(c => {
+      const collaboratorId =
+        typeof c.user === 'string'
+          ? c.user
+          : c.user?._id || c.user?.id;
+
+      return String(collaboratorId) === currentUserId;
+    });
+
+    return collaborator?.role || 'viewer';
+  }
+
   // MAIN UI
   return (
     <div className='dashboard-page'>
 
 <nav className="dashboard-navbar">
 
-  <Link to="/dashboard" className="nav-brand-link">
-    <div className="brand-logo">DF</div>
+  <Link to="/" className="nav-brand-link">
+    <div className="brand-logo">
+      <img src={logo} alt="DocFlow" className="hero-image" />
+    </div>
 
     <div className="brand-text">
       <h2>DocFlow</h2>
@@ -365,7 +389,7 @@ async function handlePermanentDelete(id) {
       onClick={handleCreateDocument}
       disabled={creating}
     >
-      {creating ? 'Creating...' : '+ New Document'}
+      {creating ? 'Creating...' : '+ New Doc'}
     </button>
 
     <button className="logout-btn" onClick={logout}>
@@ -458,9 +482,29 @@ async function handlePermanentDelete(id) {
         >
         {/* Card header */}
         <div className='document-card-header'>
-          <span className='document-badge'>
-            {doc.visibility}
-          </span>
+          <div className='document-badges'>
+            <span
+              className={`document-badge ${
+                doc.visibility === 'public'
+                  ? 'badge-public'
+                  : 'badge-private'
+              }`}
+            >
+              {doc.visibility === 'public' ? 'Public' : 'Private'}
+            </span>
+
+            <span
+              className={`role-badge ${
+                getUserRole(doc) === 'owner'
+                  ? 'role-owner'
+                  : getUserRole(doc) === 'editor'
+                  ? 'role-editor'
+                  : 'role-viewer'
+              }`}
+            >
+              {getUserRole(doc)}
+            </span>
+          </div>
 
           <button
             className={`favorite-btn ${doc.isFavorite ? 'active' : ''}`}
@@ -468,11 +512,7 @@ async function handlePermanentDelete(id) {
               e.stopPropagation();
               handleToggleFavorite(doc._id);
             }}
-            title={
-              doc.isFavorite
-                ? 'Remove from favorites'
-                : 'Add to favorites'
-            }
+            title='Favorite'
           >
             ★
           </button>
@@ -480,15 +520,6 @@ async function handlePermanentDelete(id) {
 
         {/* Title */}
         <h3>{doc.title}</h3>
-
-        {/* Content preview */}
-        <p className='document-preview'>
-          {doc.content
-            ? doc.content
-                .replace(/<[^>]*>/g, '')
-                .slice(0, 120)
-            : 'Empty document'}
-        </p>
 
         {/* Meta information */}
         <div className='document-meta'>
@@ -530,15 +561,17 @@ async function handlePermanentDelete(id) {
               </button>
             </div>
           ) : (
-            <button
-              className='delete-btn'
-              onClick={e => {
-                e.stopPropagation();
-                handleDeleteDocument(doc._id);
-              }}
-            >
-              Move to Trash
-            </button>
+            getUserRole(doc) === 'owner' && (
+              <button
+                className='delete-btn'
+                onClick={e => {
+                  e.stopPropagation();
+                  handleDeleteDocument(doc._id);
+                }}
+              >
+                Move to Trash
+              </button>
+            )
           )}
         </div>
       </article>
@@ -548,7 +581,7 @@ async function handlePermanentDelete(id) {
 
 {confirmOpen && (
   <div className='modal-overlay'>
-    <div className='confirm-modal'>
+    <div className='confirm-dialog'>
       <h3>Move document to trash?</h3>
 
       <p>

@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/authService';
 import { useToast } from '../contexts/ToastContext';
+
 import '../styles/auth.css';
+import logo from "/logo.png";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -90,9 +92,13 @@ export default function Register() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <div className="auth-logo">DF</div>
-          <h2>Start building with DocFlow</h2>
-          <p>
+          <Link to="/" className="brand-logo-link">
+            <div className="brand-logo">
+              <img src={logo} alt="DocFlow" className="hero-image" />
+            </div>
+              <h2>Start building with DocFlow</h2>
+          </Link>
+            <p>
             Create a collaborative workspace for study notes,
             projects, research, and AI-powered writing.
           </p>

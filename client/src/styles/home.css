@@ -18,6 +18,20 @@
   align-items: center;
 }
 
+.hero-image {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  object-fit: contain;
+}
+@media (max-width: 768px) {
+  .hero-image {
+    max-width: 260px;
+  }
+}
+
 .logo {
   font-size: 28px;
   font-weight: 800;

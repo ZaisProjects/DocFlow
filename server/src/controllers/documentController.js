@@ -550,6 +550,12 @@ export const getPublicDocument = async (req, res) => {
       });
     }
 
+    if (document.visibility !== 'public') {
+      return res.status(403).json({
+        message: 'This document is private',
+      });
+    }
+
     // Count public views too
     document.viewCount += 1;
     await document.save();

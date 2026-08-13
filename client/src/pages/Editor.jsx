@@ -167,7 +167,7 @@ export default function Editor() {
         const data = await getCollaborators(id);
         setCollaborators(data);
       } catch (error) {
-        showToast(error.message, 'error');
+        console.log(error.msg);
       }
     }
 
@@ -509,11 +509,45 @@ async function handleDownload(type) {
           onBlur={handleTitleChange}
         />
       </div>
+          <div className="sidebar-card">
+      <label className='settings-label'><h3>Visibility</h3></label>
+      <select className="visibility-select"
+        value={document.visibility}
+        onChange={async e => {
+          const newVisibility = e.target.value;
+
+          setDocument(prev => ({
+            ...prev,
+            visibility: newVisibility,
+          }));
+
+          try {
+            await updateDocument(id, {
+              title: document.title,
+              content: document.content,
+              visibility: newVisibility,
+            });
+
+            // Clear public link if document becomes private
+            if (newVisibility === 'private') {
+              setPublicLink('');
+            }
+
+            showToast('Visibility updated', 'success');
+          } catch (error) {
+            showToast('Failed to update visibility', 'error');
+          }
+        }}
+      >
+        <option value='private'>Private</option>
+        <option value='public'>Public</option>
+      </select>  
+      </div>  
 
       {/* AI Summary */}
       <div className="sidebar-card">
         <div className="sidebar-card-header">
-          <h3>AI Summary</h3>
+          <h3>AI Summary(Mock Version)</h3>
           <button
             className="primary-btn small"
             onClick={handleGenerateSummary}
@@ -692,8 +726,6 @@ async function handleDownload(type) {
     </aside>
   )}
 </main>
-
-
 
       <ConfirmDialog
         open={dialogOpen}

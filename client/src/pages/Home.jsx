@@ -1,14 +1,27 @@
 import { Link } from 'react-router-dom';
 import '../styles/home.css';
+import logo from "/logo.png";
 
 export default function Home() {
   return (
     <div className="home-page">
       {/* Navbar */}
       <header className="home-navbar">
-        <div className="logo">DocFlow</div>
+        <Link to="/" className="nav-brand-link">
+          <div className="brand-logo">
+            <img src={logo} alt="DocFlow" className="hero-image" />
+          </div>
+
+          <div className="brand-text">
+            <h2>DocFlow</h2>
+            <p>Collaborative workspace</p>
+          </div>
+        </Link>
 
         <nav className="nav-links">
+          <Link to="/dashboard" className="nav-link">
+            Dashboard
+          </Link>
           <Link to="/login" className="nav-link">
             Login
           </Link>

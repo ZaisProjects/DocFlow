@@ -6,7 +6,7 @@ import { useToast } from '../contexts/ToastContext';
 import { loginUser } from '../services/authService';
 
 import '../styles/auth.css';
-
+import logo from "/logo.png";
 
 
 export default function Login() {
@@ -67,8 +67,12 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <div className="auth-logo">DF</div>
-          <h2>Welcome back</h2>
+          <Link to="/" className="brand-logo-link">
+            <div className="brand-logo">
+              <img src={logo} alt="DocFlow" className="hero-image" />
+            </div>
+              <h2>Continue building with DocFlow</h2>
+          </Link>
           <p>
             Continue your collaborative engineering notes,
             research documents, and AI-assisted writing.
