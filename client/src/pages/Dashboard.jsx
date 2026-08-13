@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
+import { Link } from "react-router-dom";
 
 import '../styles/dashboard.css';
 
@@ -329,68 +330,88 @@ async function handlePermanentDelete(id) {
   // MAIN UI
   return (
     <div className='dashboard-page'>
-      <header className='dashboard-header'>
-        {/* Welcome section */}
-        <div>
-          <p className='dashboard-welcome'>Welcome back</p>
-          <h1>{user?.name}'s Workspace</h1>
-        </div>
 
-        {/* Search bar */}
-        <div className='dashboard-search'>
-          <Search size={18} className='search-icon' />
+<nav className="dashboard-navbar">
 
-          <input
-            type='text'
-            placeholder='Search title, content, or AI keywords...'
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className='search-input'
-          />
+  <Link to="/dashboard" className="nav-brand-link">
+    <div className="brand-logo">DF</div>
 
-          {searching && (
-            <span className='search-loading'>Searching...</span>
-          )}
-        </div>
+    <div className="brand-text">
+      <h2>DocFlow</h2>
+      <p>Collaborative workspace</p>
+    </div>
+  </Link>
 
-        {/* Action buttons */}
-        <div className='dashboard-actions'>
-          <button
-            className='create-btn'
-            onClick={handleCreateDocument}
-            disabled={creating}
-          >
-            {creating ? 'Creating...' : '+ New Document'}
-          </button>
+  <div className="nav-search-row">
+    <div className="dashboard-search">
+      <Search size={18} className="search-icon" />
 
-          <button className='logout-btn' onClick={logout}>
-            Logout
-          </button>
-        </div>
-      </header>
+      <input
+        type="text"
+        placeholder="Search documents, content, or AI keywords..."
+        value={searchQuery}
+        onChange={e => setSearchQuery(e.target.value)}
+        className="search-input"
+      />
+      {searching && (
+        <span className="search-loading">Searching...</span>
+      )}
+    </div>
+  </div>
 
-      <div className='dashboard-tabs'>
-        <button
-          className={activeTab === 'all' ? 'tab active' : 'tab'}
-          onClick={() => setActiveTab('all')}
-        >
-          All Documents
-        </button>
+  <div className="nav-actions">
+    <button
+      className="create-btn"
+      onClick={handleCreateDocument}
+      disabled={creating}
+    >
+      {creating ? 'Creating...' : '+ New Document'}
+    </button>
 
-        <button
-          className={activeTab === 'favorites' ? 'tab active' : 'tab'}
-          onClick={() => setActiveTab('favorites')}
-        >
-          Favorites ({allDocuments.filter(d => d.isFavorite).length})
-        </button>
+    <button className="logout-btn" onClick={logout}>
+      Logout
+    </button>
+  </div>
 
-        <button
-          className={activeTab === 'trash' ? 'tab active' : 'tab'}
-          onClick={() => setActiveTab('trash')}
-        >
-          Trash ({trashDocuments.length})
-        </button>
-      </div>
+</nav>
+
+<section className="workspace-hero">
+  <div>
+    <p className="dashboard-welcome">Welcome back</p>
+    <h1>{user?.name}'s Workspace</h1>
+    <p className="workspace-subtitle">
+      Manage your documents, collaborate with teammates,
+      and organize your knowledge in one place.
+    </p>
+  </div>
+
+
+</section>
+
+
+
+<div className="dashboard-tabs segmented">
+  <button
+    className={activeTab === 'all' ? 'tab active' : 'tab'}
+    onClick={() => setActiveTab('all')}
+  >
+    All
+  </button>
+
+  <button
+    className={activeTab === 'favorites' ? 'tab active' : 'tab'}
+    onClick={() => setActiveTab('favorites')}
+  >
+    Favorites ({allDocuments.filter(d => d.isFavorite).length})
+  </button>
+
+  <button
+    className={activeTab === 'trash' ? 'tab active' : 'tab'}
+    onClick={() => setActiveTab('trash')}
+  >
+    Trash ({trashDocuments.length})
+  </button>
+</div>
 
       {/* Error message */}
       {error && <p className='dashboard-error'>{error}</p>}
@@ -430,11 +451,11 @@ async function handlePermanentDelete(id) {
 ) : (
   <div className='documents-grid'>
     {visibleDocuments.map(doc => (
-      <article
-        key={doc._id}
-        className='document-card'
-        onClick={() => openDocument(doc._id)}
-      >
+        <article
+          key={doc._id}
+          className="document-card modern"
+          onClick={() => openDocument(doc._id)}
+        >
         {/* Card header */}
         <div className='document-card-header'>
           <span className='document-badge'>
@@ -477,6 +498,11 @@ async function handlePermanentDelete(id) {
           </span>
 
           <span>Views {doc.viewCount || 0}</span>
+        </div>
+        <div className="document-footer">
+          <span>
+            Last edited by {doc.owner?.name || 'You'}
+          </span>
         </div>
 
         {/* Action buttons */}

@@ -24,6 +24,8 @@ export default function Editor() {
 
   const { showToast, confirm } = useToast();
 
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -261,6 +263,23 @@ async function handleRemove(userId) {
     };
     }, []);
 
+    async function handleTitleChange() {
+      if (isReadOnly) return;
+
+      try {
+        await updateDocument(id, {
+          title: document.title,
+          content: document.content,
+        });
+
+        setSaveStatus('saved');
+        showToast('Title updated', 'success');
+      } catch (error) {
+        console.error(error);
+        showToast('Failed to update title', 'error');
+      }
+    }
+
     async function handleRoleChange(userId, role) {
       try {
         await updateCollaboratorRole(id, userId, role);
@@ -371,71 +390,236 @@ async function handleDownload(type) {
 
   return (
     <div className="editor-page">
-      <header className="editor-header">
-        <button
-          className="back-btn"
-          onClick={() => navigate('/dashboard')}
-        >
-          ← Back
-        </button>
 
-        <div className="editor-header-right">
-          {typingUsers.length > 0 && (
-            <p className="typing-indicator-inline">
-              {typingUsers.join(', ')} typing...
-            </p>
-          )}
 
-          <div className="editor-status">
-            {saveStatus === 'saving' && 'Saving...'}
-            {saveStatus === 'saved' && 'Saved'}
-            {saveStatus === 'error' && 'Save failed'}
-          </div>
-        </div>
-      </header>
 
-      <main className="editor-container">
+
+<header className="editor-topbar">
+  <div className="topbar-left">
+    <button
+      className="back-btn"
+      onClick={() => navigate('/dashboard')}
+    >
+      ← Dashboard
+    </button>
+
+    <div className="save-status">
+      <span className="save-dot"></span>
+
+      <span>
+        {saveStatus === 'saving'
+          ? 'Saving changes...'
+          : 'Changes saved'}
+      </span>
+    </div>
+  </div>
+
+  <div className="topbar-right">
+    <div className="online-chip">
+      <span className="online-dot"></span>
+      {onlineUsers.length} online
+    </div>
+
+    <button
+      className="panel-toggle-btn"
+      onClick={() => setSidebarOpen(prev => !prev)}
+    >
+      {sidebarOpen ? 'Hide panel' : 'Show panel'}
+    </button>
+  </div>
+</header>
+
+
+
+
+
+
+<main className={`editor-layout ${
+    sidebarOpen ? 'with-sidebar' : 'without-sidebar'
+  }`}>
+
+  {/* Main editor area */}
+  <section className="editor-main">
+    <div className="title-section">
+      <input
+        className="editor-title"
+        value={document.title}
+        readOnly={isReadOnly}
+        onChange={e => {
+          setDocument(prev => ({
+            ...prev,
+            title: e.target.value,
+          }));
+
+          setSaveStatus('saving');
+        }}
+        onBlur={handleTitleChange}
+      />
+    </div>
+
+    {typingUsers.length > 0 && (
+      <div className="typing-banner">
+        ✍ {typingUsers.join(', ')} typing...
+      </div>
+    )}
+
+    {isReadOnly && (
+      <div className="readonly-banner">
+        You have <strong>view-only access</strong> to this document.
+      </div>
+    )}
+
+    <section className="editor-surface">
+      <RichTextEditor
+        content={document.content}
+        onChange={handleEditorChange}
+        editable={!isReadOnly}
+        placeholder="Start writing your notes..."
+      />
+    </section>
+
+    <div className="editor-meta">
+      <span>Visibility: {document.visibility}</span>
+      <span>
+        Last updated: {new Date(document.updatedAt).toLocaleString()}
+      </span>
+    </div>
+  </section>
+
+  {/* Collapsible sidebar */}
+  {sidebarOpen && (
+    <aside className="editor-sidebar">
+      <h2>Document settings</h2>
+      {/* Document settings */}
+      <div className="sidebar-card">
+
+        <label className="sidebar-label"><h3>Document title</h3></label>
         <input
-          className="editor-title"
+          className="sidebar-input"
           value={document.title}
           readOnly={isReadOnly}
-          onChange={e =>
-            setDocument({
-              ...document,
+          onChange={e => {
+            setDocument(prev => ({
+              ...prev,
               title: e.target.value,
-            })
-          }
-        />
-        <FaEdit
-          size={20}
-          onClick={() => setIsReadOnly(false)}
-          style={{ cursor: "pointer" }}
-        />
-        <div className="public-link-card">
-          <div className="public-link-header">
-            <div>
-              <h3>Public sharing</h3>
-              <p>Create a read-only link that anyone can open.</p>
-            </div>
+            }));
 
-            <button
-              className="primary-btn"
-              onClick={handleGeneratePublicLink}
-            >
-              Generate Link
-            </button>
+            setSaveStatus('saving');
+          }}
+          onBlur={handleTitleChange}
+        />
+      </div>
+
+      {/* AI Summary */}
+      <div className="sidebar-card">
+        <div className="sidebar-card-header">
+          <h3>AI Summary</h3>
+          <button
+            className="primary-btn small"
+            onClick={handleGenerateSummary}
+            disabled={summaryLoading}
+          >
+            {summaryLoading ? 'Generating...' : 'Generate'}
+          </button>
+        </div>
+
+        {summary ? (
+          <div className="summary-content compact">
+            <p>{summary.replace(/<[^>]*>/g,"")}</p>
           </div>
+        ) : (
+          <p className="sidebar-muted">
+            Generate a concise summary and keywords for this document.
+          </p>
+        )}
+      </div>
 
-          {publicLink && (
-            <div className="public-link-row">
-              <input
-                className="public-link-input"
-                readOnly
-                value={`${window.location.origin}/public/${publicLink}`}
-              />
 
+      {/* Export */}
+      <div className="sidebar-card">
+        <h3>Export</h3>
+
+        <div className="sidebar-actions">
+          <button onClick={() => handleDownload('pdf')}>PDF</button>
+          <button onClick={() => handleDownload('docx')}>DOCX</button>
+          <button onClick={() => handleDownload('txt')}>TXT</button>
+        </div>
+      </div>
+
+      {/* Online users */}
+      <div className="sidebar-card">
+        <div className="sidebar-card-header">
+          <h3>Online now</h3>
+          <span>{onlineUsers.length}</span>
+        </div>
+
+        <div className="presence-list">
+          {onlineUsers.map((u, index) => (
+            <div key={index} className="presence-item">
+              <div className="presence-avatar">
+                {u.name.charAt(0).toUpperCase()}
+              </div>
+              <span>{u.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Share */}
+      {document.owner?._id === user.id && (
+        <div className="sidebar-card">
+          <h3>Share document</h3>
+
+          <form onSubmit={handleShare} className="sidebar-share-form">
+            <input
+              type="email"
+              placeholder="Enter user email"
+              value={shareEmail}
+              onChange={e => setShareEmail(e.target.value)}
+              required
+            />
+
+            <select
+              value={shareRole}
+              onChange={e => setShareRole(e.target.value)}
+            >
+              <option value="editor">Editor</option>
+              <option value="viewer">Viewer</option>
+            </select>
+
+            <button type="submit" className="primary-btn">
+              Share
+            </button>
+          </form>
+
+          {shareMessage && (
+            <p className="share-message">{shareMessage}</p>
+          )}
+        </div>
+      )}
+
+      {/* Public sharing */}
+      <div className="sidebar-card">
+        <div className="sidebar-card-header">
+          <h3>Public sharing</h3>
+          <button
+            className="primary-btn small"
+            onClick={handleGeneratePublicLink}
+          >
+            Generate
+          </button>
+        </div>
+
+        {publicLink ? (
+          <div className="public-link-column">
+            <input
+              className="public-link-input"
+              readOnly
+              value={`${window.location.origin}/public/${publicLink}`}
+            />
+
+            <div className="sidebar-actions">
               <button
-                className="copy-btn"
                 onClick={() =>
                   navigator.clipboard.writeText(
                     `${window.location.origin}/public/${publicLink}`
@@ -454,180 +638,62 @@ async function handleDownload(type) {
                 Open
               </a>
             </div>
-          )}
-        </div>
-        <div className='export-card'>
-        <div>
-          <h3>Export document</h3>
-          <p>Download this document as PDF, DOCX, or TXT.</p>
-        </div>
-
-        <div className='export-actions'>
-          <button onClick={() => handleDownload('pdf')}>PDF</button>
-
-          <button onClick={() => handleDownload('docx')}>DOCX</button>
-
-          <button onClick={() => handleDownload('txt')}>TXT</button>
-        </div>
+          </div>
+        ) : (
+          <p className="sidebar-muted">
+            Create a read-only link anyone can open.
+          </p>
+        )}
       </div>
 
-        <div className="editor-presence">
-          <strong>Online: {onlineUsers.length}</strong>
-
-          <div className="presence-list">
-            {onlineUsers.map((u, index) => (
-              <span key={index} className="presence-chip">
-                {u.name}
-              </span>
-            ))}
+      {/* Collaborators */}
+      {document.owner?._id === user.id && (
+        <div className="sidebar-card">
+          <div className="sidebar-card-header">
+            <h3>Collaborators</h3>
+            <span>{collaborators.length}</span>
           </div>
-        </div>
 
-        {document.owner?._id === user.id && (
-          <section className="share-panel">
-            <h3>Share document</h3>
+          {collaborators.length === 0 ? (
+            <p className="sidebar-muted">No collaborators yet</p>
+          ) : (
+            <div className="collaborators-list compact">
+              {collaborators.map(c => (
+                <div key={c.user._id} className="collaborator-item">
+                  <div className="collaborator-info">
+                    <strong>{c.user.name}</strong>
+                    <p>{c.user.email}</p>
+                  </div>
 
-              <form onSubmit={handleShare} className="share-form">
-                <input
-                  type="email"
-                  placeholder="Enter user email"
-                  value={shareEmail}
-                  onChange={e => setShareEmail(e.target.value)}
-                  required
-                />
+                  <div className="collaborator-actions">
+                    <select
+                      value={c.role}
+                      onChange={e =>
+                        handleRoleChange(c.user._id, e.target.value)
+                      }
+                    >
+                      <option value="viewer">Viewer</option>
+                      <option value="editor">Editor</option>
+                    </select>
 
-                <select
-                  value={shareRole}
-                  onChange={e => setShareRole(e.target.value)}
-                >
-                  <option value="editor">Editor</option>
-                  <option value="viewer">Viewer</option>
-                </select>
-
-                <button type="submit">Share</button>
-              </form>
-
-                {shareMessage && (
-                  <p className="share-message">{shareMessage}</p>
-                )}
-
-                <div className="collaborator-list">
-                  <h3>Collaborators</h3>
-
-                  <div className="collaborators-list">
-                    {collaborators.length === 0 ? (
-                      <p>No collaborators yet</p>
-                    ) : (
-                      collaborators.map(c => (
-                        <div key={c.user._id} className="collaborator-item">
-                          <div className="collaborator-info">
-                            <strong>{c.user.name}</strong>
-                            <p>{c.user.email}</p>
-                          </div>
-
-                          <div className="collaborator-actions">
-                            <select
-                              value={c.role}
-                              onChange={e =>
-                                handleRoleChange(c.user._id, e.target.value)
-                              }
-                            >
-                              <option value="viewer">Viewer</option>
-                              <option value="editor">Editor</option>
-                            </select>
-
-                            <button onClick={() => askRemove(c.user._id)}>
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
+                    <button
+                      className="remove-collab-btn"
+                      onClick={() => askRemove(c.user._id)}
+                    >
+                      Remove
+                    </button>
                   </div>
                 </div>
-              </section>
-            )}
-
-        {isReadOnly && (
-          <div className="readonly-banner">
-            You have <strong>view-only access</strong> to this document.
-          </div>
-        )}
-
-        <div className="ai-summary-card">
-          <div className="ai-summary-header">
-            <div>
-              <h3>AI Summary</h3>
-              <p>Generate a concise summary and keywords for this document.</p>
-            </div>
-
-            <button
-              className="primary-btn"
-              onClick={handleGenerateSummary}
-              disabled={summaryLoading}
-            >
-              {summaryLoading ? 'Generating...' : 'Generate Summary'}
-            </button>
-          </div>
-
-          {summary && (
-            <div className="summary-content">
-              <p>{summary}</p>
+              ))}
             </div>
           )}
         </div>
+      )}
+    </aside>
+  )}
+</main>
 
-        <RichTextEditor
-          content={document.content}
-          onChange={value => {
-            if (isReadOnly) return;
 
-            // Update local UI immediately
-            setDocument(prev => ({
-              ...prev,
-              content: value,
-            }));
-
-            setSaveStatus('saving');
-
-            // Send typing start event
-            socket.emit('typing-start', {
-              documentId: id,
-              userId: user.id,
-              name: user.name,
-            });
-
-            // Debounced typing stop
-            clearTimeout(typingTimeoutRef.current);
-
-            typingTimeoutRef.current = setTimeout(() => {
-              socket.emit('typing-stop', {
-                documentId: id,
-              });
-
-              setSaveStatus('saved');
-            }, 800);
-
-            // Send realtime document update
-            socket.emit('document-change', {
-              documentId: id,
-              content: value,
-              userId: user.id,
-            });
-          }}
-          editable={!isReadOnly}
-          placeholder="Start writing your notes..."
-        />
-
-        <div className="editor-meta">
-          <span>Visibility: {document.visibility}</span>
-
-          <span>
-            Last updated:{' '}
-            {new Date(document.updatedAt).toLocaleString()}
-          </span>
-        </div>
-      </main>
 
       <ConfirmDialog
         open={dialogOpen}
