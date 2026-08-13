@@ -81,3 +81,22 @@ export async function generateDocumentSummary(documentId) {
 
   return data;
 }
+
+export async function searchDocuments(query) {
+  const token = localStorage.getItem('token');
+
+  const response = await fetch(
+    `http://localhost:5000/api/search?q=${encodeURIComponent(query)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Search failed');
+  }
+
+  return response.json();
+}
