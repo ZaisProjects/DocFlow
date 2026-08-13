@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaEdit } from "react-icons/fa";
-
+import RichTextEditor from '../components/editor/TextEditorToolbar';
 import { useToast } from '../contexts/ToastContext';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import '../styles/editor.css';
@@ -294,6 +294,43 @@ async function handleRemove(userId) {
     }
   }
 
+function handleEditorChange(value) {
+  if (isReadOnly) return;
+
+  // Update local UI immediately
+  setDocument(prev => ({
+    ...prev,
+    content: value,
+  }));
+
+  setSaveStatus('saving');
+
+  // Send typing start
+  socket.emit('typing-start', {
+    documentId: id,
+    userId: user.id,
+    name: user.name,
+  });
+
+  // Debounced typing stop
+  clearTimeout(typingTimeoutRef.current);
+
+  typingTimeoutRef.current = setTimeout(() => {
+    socket.emit('typing-stop', {
+      documentId: id,
+    });
+
+    setSaveStatus('saved');
+  }, 800);
+
+  // Send realtime document change
+  socket.emit('document-change', {
+    documentId: id,
+    content: value,
+    userId: user.id,
+  });
+}
+
   // Loading state
   if (loading) {
     return (
@@ -512,13 +549,10 @@ async function handleRemove(userId) {
           )}
         </div>
 
-        <textarea
-          className="editor-textarea"
-          value={document.content}
-          readOnly={isReadOnly}
-          onChange={e => {
+        <RichTextEditor
+          content={document.content}
+          onChange={value => {
             if (isReadOnly) return;
-            const value = e.target.value;
 
             // Update local UI immediately
             setDocument(prev => ({
@@ -528,7 +562,7 @@ async function handleRemove(userId) {
 
             setSaveStatus('saving');
 
-            // Send typing start
+            // Send typing start event
             socket.emit('typing-start', {
               documentId: id,
               userId: user.id,
@@ -546,13 +580,14 @@ async function handleRemove(userId) {
               setSaveStatus('saved');
             }, 800);
 
-            // Send realtime document change
+            // Send realtime document update
             socket.emit('document-change', {
               documentId: id,
               content: value,
               userId: user.id,
             });
           }}
+          editable={!isReadOnly}
           placeholder="Start writing your notes..."
         />
 

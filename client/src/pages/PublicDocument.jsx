@@ -33,7 +33,10 @@ export default function PublicDocument() {
     <div style={{ maxWidth: 800, margin: '40px auto', padding: 20 }}>
       <h1>{doc.title}</h1>
       <p><strong>Owner:</strong> {doc.owner.name}</p>
-      <pre style={{ whiteSpace: 'pre-wrap' }}>{doc.content}</pre>
+      <div
+        className='public-document-content'
+        dangerouslySetInnerHTML={{ __html: doc.content }}
+      />
     </div>
   );
 }

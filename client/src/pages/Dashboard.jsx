@@ -462,7 +462,11 @@ async function handlePermanentDelete(id) {
 
         {/* Content preview */}
         <p className='document-preview'>
-          {doc.content?.slice(0, 120) || 'Empty document'}
+          {doc.content
+            ? doc.content
+                .replace(/<[^>]*>/g, '')
+                .slice(0, 120)
+            : 'Empty document'}
         </p>
 
         {/* Meta information */}

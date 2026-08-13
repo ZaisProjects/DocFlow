@@ -1,0 +1,65 @@
+.rich-editor-wrapper {
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.editor-toolbar button {
+  border: none;
+  background: #ffffff;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.editor-toolbar button:hover {
+  background: #eef2ff;
+}
+
+.editor-toolbar button.active {
+  background: #4f46e5;
+  color: #ffffff;
+}
+
+.editor-content {
+  padding: 18px;
+  min-height: 360px;
+}
+
+.editor-content .ProseMirror {
+  outline: none;
+  min-height: 320px;
+  line-height: 1.7;
+  font-size: 16px;
+  color: #111827;
+}
+
+.editor-content .ProseMirror p {
+  margin: 0 0 1rem;
+}
+
+.editor-content .ProseMirror h1 {
+  font-size: 2rem;
+  margin: 1.5rem 0 1rem;
+}
+
+.editor-content .ProseMirror h2 {
+  font-size: 1.5rem;
+  margin: 1.25rem 0 0.75rem;
+}
+
+.editor-content .ProseMirror ul,
+.editor-content .ProseMirror ol {
+  padding-left: 1.5rem;
+}
