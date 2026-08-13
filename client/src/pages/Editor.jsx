@@ -15,6 +15,7 @@ import {
   removeCollaborator,
   updateCollaboratorRole,
   generateDocumentSummary,
+  downloadDocument,
 } from '../services/documentService';
 
 export default function Editor() {
@@ -331,6 +332,19 @@ function handleEditorChange(value) {
   });
 }
 
+async function handleDownload(type) {
+  try {
+    await downloadDocument(id, type);
+
+    showToast(
+      `${type.toUpperCase()} downloaded successfully`,
+      'success'
+    );
+  } catch (error) {
+    showToast(error.message, 'error');
+  }
+}
+
   // Loading state
   if (loading) {
     return (
@@ -442,6 +456,20 @@ function handleEditorChange(value) {
             </div>
           )}
         </div>
+        <div className='export-card'>
+        <div>
+          <h3>Export document</h3>
+          <p>Download this document as PDF, DOCX, or TXT.</p>
+        </div>
+
+        <div className='export-actions'>
+          <button onClick={() => handleDownload('pdf')}>PDF</button>
+
+          <button onClick={() => handleDownload('docx')}>DOCX</button>
+
+          <button onClick={() => handleDownload('txt')}>TXT</button>
+        </div>
+      </div>
 
         <div className="editor-presence">
           <strong>Online: {onlineUsers.length}</strong>

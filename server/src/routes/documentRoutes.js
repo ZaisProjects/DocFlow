@@ -21,6 +21,12 @@ import {
 
  } from '../controllers/documentController.js';
 
+  import {
+    exportPdf,
+    exportDocx,
+    exportTxt,
+  } from '../controllers/exportController.js';
+
 const router = express.Router();
 
 // Protect all document routes
@@ -69,6 +75,11 @@ router.get('/:id', getDocumentById);
 router.patch('/:id', updateDocument);
 
 router.put('/:id', updateDocument);
+
+// EXPORT
+router.get('/:id/export/pdf', exportPdf);
+router.get('/:id/export/docx', exportDocx);
+router.get('/:id/export/txt', exportTxt);
 
 
 export default router;
