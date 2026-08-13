@@ -279,6 +279,34 @@ export const restoreDocument = async (req, res) => {
   }
 };
 
+// PERMANENT DELETE DOCUMENT
+export const permanentlyDeleteDocument = async (req, res) => {
+  try {
+    const document = await Document.findOne({
+      _id: req.params.id,
+      owner: req.user.userId,
+      isDeleted: true,
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        message: 'Document not found in trash',
+      });
+    }
+
+    await Document.findByIdAndDelete(req.params.id);
+
+    res.json({
+      message: 'Document permanently deleted',
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};
+
 // SHARE DOCUMENT
 export const shareDocument = async (req, res) => {
   try {

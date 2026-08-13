@@ -100,3 +100,86 @@ export async function searchDocuments(query) {
 
   return response.json();
 }
+
+// Get trashed documents
+export async function getTrashDocuments() {
+  const token = localStorage.getItem('token');
+
+  const res = await fetch(
+    'http://localhost:5000/api/documents/trash',
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error('Failed to load trash');
+  }
+
+  return res.json();
+}
+
+// Restore document
+export async function restoreDocument(id) {
+  const token = localStorage.getItem('token');
+
+  const res = await fetch(
+    `http://localhost:5000/api/documents/${id}/restore`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error('Failed to restore document');
+  }
+
+  return res.json();
+}
+
+// Move document to trash
+export async function deleteDocument(id) {
+  const token = localStorage.getItem('token');
+
+  const res = await fetch(
+    `http://localhost:5000/api/documents/${id}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error('Failed to delete document');
+  }
+
+  return res.json();
+}
+
+// Permanently delete document
+export async function permanentlyDeleteDocument(id) {
+  const token = localStorage.getItem('token');
+
+  const res = await fetch(
+    `http://localhost:5000/api/documents/${id}/delete`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error('Failed to permanently delete document');
+  }
+
+  return res.json();
+}

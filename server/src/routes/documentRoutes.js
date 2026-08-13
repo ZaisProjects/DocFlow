@@ -11,6 +11,7 @@ import {
   deleteDocument,
   getTrashDocuments,
   restoreDocument,
+  permanentlyDeleteDocument,
   shareDocument,
   getCollaborators,
   removeCollaborator,
@@ -36,6 +37,9 @@ router.get('/trash', getTrashDocuments);
 
 // RESTORE
 router.patch('/:id/restore', restoreDocument);
+
+// PERMANENT DELETE
+router.delete('/:id/delete', permanentlyDeleteDocument);
 
 // TOGGLE FAVORITE
 router.patch('/:id/favorite', toggleFavorite);
