@@ -4,7 +4,7 @@ DocFlow is a full-stack collaborative document workspace that I built to practic
 
 The idea behind DocFlow is very simple: users should be able to create and manage documents, share them with other users, collaborate with teammates, and organize their work from one place.
 
-I built the project using React for the frontend and Node.js/Express.js for the backend, with MongoDB Atlas as the database. I also implemented JWT authentication, document sharing, collaborator management, Socket.IO-based real-time communication, search, public document sharing, AI-summerizer(Mock Verion) and document export(pdf, txt, docx).
+I built the project using React for the frontend and Node.js/Express.js for the backend, with MongoDB Atlas as the database. I also implemented JWT authentication, document sharing, collaborator management, Socket.IO-based real-time communication, search, public document sharing, AI-summerizer(Mock Version) and document download (pdf, txt, docx).
 
 The website is deployed with Frontend --> Vercel, Backend --> Railway, and DataBase --> MongoDB Atlas.
 
@@ -41,9 +41,7 @@ The website is deployed with Frontend --> Vercel, Backend --> Railway, and DataB
 ### Other Features
 - Document search
 - Public document links
-- PDF export
-- DOCX export
-- TXT export
+- Download Format - PDF, TXT, DOCX
 - AI(Mock) service integration
 
 ---
