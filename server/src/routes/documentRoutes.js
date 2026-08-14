@@ -2,7 +2,7 @@ import express from 'express';
 
 import authMiddleware from '../middleware/authMiddleware.js';
 
-import { 
+import {
   createDocument,
   getDocuments,
   getDocumentById,
@@ -19,13 +19,13 @@ import {
   generatePublicLink,
   generateDocumentSummary,
 
- } from '../controllers/documentController.js';
+} from '../controllers/documentController.js';
 
-  import {
-    exportPdf,
-    exportDocx,
-    exportTxt,
-  } from '../controllers/exportController.js';
+import {
+  exportPdf,
+  exportDocx,
+  exportTxt,
+} from '../controllers/exportController.js';
 
 const router = express.Router();
 
