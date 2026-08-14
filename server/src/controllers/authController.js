@@ -67,6 +67,10 @@ export const register = async (req, res) => {
       },
     });
   } catch (error) {
+
+  console.error('REGISTER ERROR:', error);
+  console.error('MESSAGE:', error.message);
+
     res.status(500).json({
       message: 'Server error',
       error: error.message,
