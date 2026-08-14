@@ -19,7 +19,10 @@ const server = http.createServer(app);
 // Create Socket.IO server
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: [
+      'http://localhost:5173',
+      process.env.CLIENT_URL,
+    ],
     methods: ['GET', 'POST', 'PUT'],
   },
 });
@@ -28,7 +31,6 @@ const io = new Server(server, {
 const documentPresence = new Map();
 
 io.on('connection', socket => {
-  console.log('Socket connected:', socket.id);
 
   // Join document room
   socket.on('join-document', async ({ documentId, user }) => {
@@ -110,9 +112,6 @@ socket.on('document-change', async data => {
 
     await document.save();
 
-    console.log(
-      `Document ${documentId} saved by ${userId}`
-    );
   } catch (error) {
     console.error(
       'Realtime save error:',
@@ -152,10 +151,9 @@ socket.on('typing-stop', ({ documentId }) => {
       }
     }
 
-    console.log('Socket disconnected:', socket.id);
   });
 });
 
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`--- Server running on port ${PORT} ---`);
 });

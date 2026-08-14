@@ -96,7 +96,6 @@ export default function Dashboard() {
         content: '',
       });
 
-      console.log('Created document:', newDoc);
       showToast("Document Created Sucessfully ", "success");
 
       // Open editor immediately

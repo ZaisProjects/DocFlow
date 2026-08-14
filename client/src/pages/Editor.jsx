@@ -68,8 +68,6 @@ export default function Editor() {
 
         const data = await getDocumentById(id);
 
-        console.log('Editor API response:', data);
-
         setDocument(data);
       } catch (error) {
         console.error(error);

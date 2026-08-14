@@ -1,4 +1,5 @@
 import api from '../api/axios';
+import { API_BASE_URL } from '../config/api';
 
 // Create a new document
 export async function createDocument(data) {
@@ -64,7 +65,7 @@ export async function generateDocumentSummary(documentId) {
   const token = localStorage.getItem('token');
 
   const response = await fetch(
-    `http://localhost:5000/api/documents/${documentId}/summary`,
+    `${API_BASE_URL}/documents/${documentId}/summary`,
     {
       method: 'POST',
       headers: {
@@ -86,7 +87,7 @@ export async function searchDocuments(query) {
   const token = localStorage.getItem('token');
 
   const response = await fetch(
-    `http://localhost:5000/api/search?q=${encodeURIComponent(query)}`,
+    `${API_BASE_URL}/search?q=${encodeURIComponent(query)}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -105,7 +106,7 @@ export async function toggleFavorite(id) {
   const token = localStorage.getItem('token');
 
   const response = await fetch(
-    `http://localhost:5000/api/documents/${id}/favorite`,
+    `${API_BASE_URL}/documents/${id}/favorite`,
     {
       method: 'PATCH',
       headers: {
@@ -128,7 +129,7 @@ export async function getTrashDocuments() {
   const token = localStorage.getItem('token');
 
   const res = await fetch(
-    'http://localhost:5000/api/documents/trash',
+    `${API_BASE_URL}/documents/trash`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -148,7 +149,7 @@ export async function restoreDocument(id) {
   const token = localStorage.getItem('token');
 
   const res = await fetch(
-    `http://localhost:5000/api/documents/${id}/restore`,
+    `${API_BASE_URL}/documents/${id}/restore`,
     {
       method: 'PATCH',
       headers: {
@@ -169,7 +170,7 @@ export async function deleteDocument(id) {
   const token = localStorage.getItem('token');
 
   const res = await fetch(
-    `http://localhost:5000/api/documents/${id}`,
+    `${API_BASE_URL}/documents/${id}`,
     {
       method: 'DELETE',
       headers: {
@@ -190,7 +191,7 @@ export async function permanentlyDeleteDocument(id) {
   const token = localStorage.getItem('token');
 
   const res = await fetch(
-    `http://localhost:5000/api/documents/${id}/delete`,
+    `${API_BASE_URL}/documents/${id}/delete`,
     {
       method: 'DELETE',
       headers: {
@@ -210,7 +211,7 @@ export async function downloadDocument(id, type) {
   const token = localStorage.getItem('token');
 
   const response = await fetch(
-    `http://localhost:5000/api/documents/${id}/export/${type}`,
+    `${API_BASE_URL}/documents/${id}/export/${type}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,

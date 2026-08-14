@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import { API_BASE_URL } from '../config/api';
+
 export default function PublicDocument() {
   const { shareLink } = useParams();
   const [doc, setDoc] = useState(null);
@@ -11,7 +13,7 @@ export default function PublicDocument() {
     async function load() {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/public/${shareLink}`
+          `${API_BASE_URL}/public/${shareLink}`
         );
 
         if (res.status === 403) {

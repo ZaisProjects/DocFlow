@@ -7,14 +7,12 @@ import '../styles/profile.css';
 export default function Profile() { 
     const [user, setUser] = useState(null); 
     const [loading, setLoading] = useState(true); 
-    console.log(user);
     
     useEffect(() => { 
         async function load() { 
             try { 
                 const data = await getProfile(); 
                 setUser(data); 
-                console.log(data)
             } 
             catch (error) { 
                 console.error(error); 
