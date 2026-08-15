@@ -6,6 +6,8 @@ import { useToast } from '../contexts/ToastContext';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import '../styles/editor.css';
 
+import { API_BASE_URL } from '../config/api';
+
 import socket from '../services/socket';
 import {
   getDocumentById,
@@ -202,7 +204,7 @@ async function handleGeneratePublicLink() {
   const token = localStorage.getItem('token');
 
   const res = await fetch(
-    `http://localhost:5000/api/documents/${id}/public-link`,
+    `${API_BASE_URL}/documents/${id}/public-link`,
     {
       method: 'POST',
       headers: {

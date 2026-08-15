@@ -511,16 +511,18 @@ async function handlePermanentDelete(id) {
             </span>
           </div>
 
-          <button
-            className={`favorite-btn ${doc.isFavorite ? 'active' : ''}`}
-            onClick={e => {
-              e.stopPropagation();
-              handleToggleFavorite(doc._id);
-            }}
-            title='Favorite'
-          >
-            ★
-          </button>
+          {getUserRole(doc) === 'owner' && (
+            <button
+              className={`favorite-btn ${doc.isFavorite ? 'active' : ''}`}
+              onClick={e => {
+                e.stopPropagation();
+                handleToggleFavorite(doc._id);
+              }}
+              title="Favorite"
+            >
+              ★
+            </button>
+          )}
         </div>
 
         {/* Title */}
