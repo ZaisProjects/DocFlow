@@ -46,7 +46,7 @@ export default function Home() {
           <p className="hero-description">
             Create, edit, and share documents in real time.
             Collaborate with teammates, generate AI summaries, and
-            export your work as PDF, DOCX, or TXT — all in one place.
+            download your work as PDF, DOCX, or TXT — all in one place.
           </p>
 
           <div className="hero-actions">
