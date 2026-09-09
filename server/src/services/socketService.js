@@ -15,7 +15,7 @@ export function initializeSocket(server) {
     },
   });
 
-    // documentId -> Map(socketId -> user)
+    // documentId -> Map(userId -> { user, sockets })
     const documentPresence = new Map();
 
     // Stores pending MongoDB saves
@@ -64,23 +64,28 @@ export function initializeSocket(server) {
 
             // Presence
             if (!documentPresence.has(documentId)) {
-                documentPresence.set(documentId, new Map());
+            documentPresence.set(documentId, new Map());
             }
 
-            documentPresence
-                .get(documentId)
-                .set(socket.id, user);
+            const users = documentPresence.get(documentId);
 
-            const onlineUsers = Array.from(
-                documentPresence
-                .get(documentId)
-                .values()
+            const userId = String(user.id);
+
+            if (!users.has(userId)) {
+            users.set(userId, {
+                user,
+                sockets: new Set(),
+            });
+            }
+
+            users.get(userId).sockets.add(socket.id);
+
+            // Send unique online users
+            const onlineUsers = Array.from(users.values()).map(
+            entry => entry.user
             );
 
-            io.to(documentId).emit(
-                'presence-update',
-                onlineUsers
-            );
+            io.to(documentId).emit('presence-update', onlineUsers);
 
             // Load document
             socket.emit('load-document', {
@@ -209,23 +214,41 @@ export function initializeSocket(server) {
 
         // Disconnect cleanup
         socket.on('disconnect', () => {
-            const documentId = socket.documentId;
+        const documentId = socket.documentId;
+        const userId = socket.user?.id
+            ? String(socket.user.id)
+            : null;
 
-            if(documentId && documentPresence.has(documentId)) {
+        if (!documentId || !userId) return;
 
-                documentPresence.get(documentId).delete(socket.id);
+        const users = documentPresence.get(documentId);
 
-                const onlineUsers = Array.from(
-                    documentPresence.get(documentId).values()
-                );
+        if (!users) return;
 
-                io.to(documentId).emit('presence-update', onlineUsers);
+        const userEntry = users.get(userId);
 
-                if (documentPresence.get(documentId).size === 0) {
-                    documentPresence.delete(documentId);
-                }
-            }
+        if (!userEntry) return;
 
+        // Remove this socket
+        userEntry.sockets.delete(socket.id);
+
+        // If user has no more active sockets,
+        // remove the user completely
+        if (userEntry.sockets.size === 0) {
+            users.delete(userId);
+        }
+
+        // Send updated unique users
+        const onlineUsers = Array.from(users.values()).map(
+            entry => entry.user
+        );
+
+        io.to(documentId).emit('presence-update', onlineUsers);
+
+        // Remove empty document room
+        if (users.size === 0) {
+            documentPresence.delete(documentId);
+        }
         });
     });
   return io;

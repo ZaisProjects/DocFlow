@@ -91,9 +91,16 @@ export default function Editor() {
     };
   }, []);
 
-  // Join document room
-  useEffect(() => {
-    if (!document || !user) return;
+// Join document room + presence
+useEffect(() => {
+  if (!id || !user?.id) return;
+
+  function handlePresence(users) {
+    setOnlineUsers(users);
+  }
+
+  function handleConnect() {
+    console.log('Socket connected:', socket.id);
 
     socket.emit('join-document', {
       documentId: id,
@@ -102,20 +109,24 @@ export default function Editor() {
         name: user.name,
       },
     });
-  }, [document, id, user]);
+  }
 
-  // Presence updates
-  useEffect(() => {
-    function handlePresence(users) {
-      setOnlineUsers(users);
-    }
+  socket.on('presence-update', handlePresence);
+  socket.on('connect', handleConnect);
 
-    socket.on('presence-update', handlePresence);
+  if (!socket.connected) {
+    socket.connect();
+  } else {
+    handleConnect();
+  }
 
-    return () => {
-      socket.off('presence-update', handlePresence);
-    };
-  }, []);
+  return () => {
+    socket.off('presence-update', handlePresence);
+    socket.off('connect', handleConnect);
+
+    socket.disconnect();
+  };
+}, [id, user?.id]);
 
   // Realtime content updates
   useEffect(() => {
